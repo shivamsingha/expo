@@ -1,11 +1,9 @@
 package versioned.host.exp.exponent.modules.universal.notifications;
 
 import android.content.Context;
-import android.util.Log;
 
 import expo.modules.notifications.notifications.emitting.NotificationsEmitter;
 import expo.modules.notifications.notifications.model.Notification;
-import expo.modules.notifications.notifications.model.NotificationRequest;
 import expo.modules.notifications.notifications.model.NotificationResponse;
 import host.exp.exponent.kernel.ExperienceId;
 
@@ -19,26 +17,15 @@ public class ScopedNotificationsEmitter extends NotificationsEmitter {
 
   @Override
   public void onNotificationReceived(Notification notification) {
-    if (shouldHandleNotification(notification)) {
+    if (ScopedNotificationsUtils.shouldHandleNotification(notification, mExperienceId)) {
       super.onNotificationReceived(notification);
     }
   }
 
   @Override
   public void onNotificationResponseReceived(NotificationResponse response) {
-    if (shouldHandleNotification(response.getNotification())) {
+    if (ScopedNotificationsUtils.shouldHandleNotification(response.getNotification(), mExperienceId)) {
       super.onNotificationResponseReceived(response);
     }
-  }
-
-  private boolean shouldHandleNotification(Notification notification) {
-    NotificationRequest notificationRequest = notification.getNotificationRequest();
-    if (notificationRequest instanceof ScopedNotificationRequest) {
-      ScopedNotificationRequest scopedNotificationRequest = (ScopedNotificationRequest) notificationRequest;
-      return scopedNotificationRequest.checkIfBelongsToExperience(mExperienceId);
-    }
-
-    Log.w("expo-notifications", "The notification's requester should be scoped.", null);
-    return false;
   }
 }
