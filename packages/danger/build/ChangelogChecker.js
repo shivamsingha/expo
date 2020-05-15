@@ -49,19 +49,20 @@ function getSuggestedChangelogEntries(packageNames) {
 }
 async function runAddChangelogCommandAsync(suggestedEntries) {
     for (const entry of suggestedEntries) {
-        await spawn_async_1.default('et', [
-            `add-changelog`,
-            `--package`,
-            entry.packageName,
-            `--entry`,
-            entry.message,
-            `--author`,
-            prAuthor,
-            `--type`,
-            entryTypeToString(entry.type),
-            `--pull-request`,
-            `${pr.number}`,
-        ]);
+        await (path.join(Utils_1.getExpoRepositoryRootDir(), 'bin', 'expotools'),
+            [
+                `add-changelog`,
+                `--package`,
+                entry.packageName,
+                `--entry`,
+                entry.message,
+                `--author`,
+                prAuthor,
+                `--type`,
+                entryTypeToString(entry.type),
+                `--pull-request`,
+                `${pr.number}`,
+            ]);
     }
     return Promise.all(suggestedEntries.map(async (entry) => {
         const changelogPath = path.join(Utils_1.getExpoRepositoryRootDir(), Utils_1.getPackageChangelogRelativePath(entry.packageName));
@@ -116,9 +117,16 @@ async function checkChangelog() {
     // applies suggested fixes using `et add-changelog` command
     const fixedEntries = await runAddChangelogCommandAsync(suggestedEntries);
     // creates/updates PR form result of `et` command - it will be merged to the current PR
-    const { html_url } = (await pullRequestManager.createOrUpdatePRAsync(fixedEntries)) || {};
+    let prUrl;
+    try {
+        prUrl = ((await pullRequestManager.createOrUpdatePRAsync(fixedEntries)) || {}).html_url;
+    }
+    catch (e) {
+        console.log("Couldn't create a pull request.");
+        console.log(e);
+    }
     // generates danger report. It will contain result of `et` command as a git diff and link to created PR
-    await generateReport(fixedEntries, html_url);
+    await generateReport(fixedEntries, prUrl);
 }
 exports.checkChangelog = checkChangelog;
 function entryTypeToString(type) {
